@@ -11,7 +11,7 @@ class App : public bag::Application
 {
 public:
     App(int argc, char** argv)
-        : bag::Application(bag::Options{.title = "bgb"}, true)
+        : bag::Application(bag::Options{160 * scale * 2, 144 * scale, "badge"}, true)
     {
         placeholder.from_file("../gameboy.jpg");
         ASSERT(argc > 1);
@@ -23,36 +23,42 @@ public:
     {
         Gameboy g;
         memcpy(&g, &gb, sizeof(Gameboy));
-        Instruction instruction = gb.fetch_instruction();
-        gb.fetch_data(instruction);
+        Instruction instruction = g.fetch_instruction();
+        g.fetch_data(instruction);
         disassembly.emplace(0x100, to_string(instruction));
-        instruction = gb.fetch_instruction();
-        gb.fetch_data(instruction);
+        instruction = g.fetch_instruction();
+        g.fetch_data(instruction);
         disassembly.emplace(0x101, to_string(instruction));
-        gb.cpu.pc = 0x150;
-        for (size_t i = gb.cpu.pc; i <= Memory::ROM_BANK_N_END; i = gb.cpu.pc)
+        g.cpu.pc = 0x150;
+        for (size_t i = g.cpu.pc; i <= Memory::ROM_BANK_N_END; i = g.cpu.pc)
         {
-            instruction = gb.fetch_instruction();
-            gb.fetch_data(instruction);
+            instruction = g.fetch_instruction();
+            g.fetch_data(instruction);
             disassembly.emplace(i, to_string(instruction));
         }
     }
 
     void game_window()
     {
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+
         static ImGuiWindowFlags flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoDecoration
-            | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBackground;
-        static float scale = 4;
-        ImGui::SetNextWindowSize({160 * scale, 144 * scale});
+            | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings
+            | ImGuiWindowFlags_NoBackground;
+        ImGui::SetNextWindowPos({0, 0});
+        ImGui::SetNextWindowSize({160.0f * scale, 144.0f * scale});
 
         if (!ImGui::Begin("Game", nullptr, flags))
         {
+            ImGui::PopStyleVar(2);
             ImGui::End();
             return;
         }
 
         ImGui::Image(placeholder.to_ptr(), ImGui::GetWindowSize());
 
+        ImGui::PopStyleVar(2);
         ImGui::End();
     }
 
@@ -213,6 +219,7 @@ public:
     Gameboy gb;
     bag::Image placeholder;
     std::map<size_t, std::string> disassembly;
+    inline static uint32_t scale = 5;
 };
 
 int main(int argc, char** argv)

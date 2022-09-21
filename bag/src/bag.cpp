@@ -51,6 +51,9 @@ void Application::render()
 
     if (full_window_imgui_)
     {
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+
         static bool use_work_area = false;
         static ImGuiWindowFlags flags = ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove
             | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoBackground;
@@ -59,9 +62,11 @@ void Application::render()
         ImGui::SetNextWindowSize(use_work_area ? viewport->WorkSize : viewport->Size);
         if (!ImGui::Begin("Fullscreen window", nullptr, flags))
         {
+            ImGui::PopStyleVar(2);
             ImGui::EndFrame();
             return;
         }
+        ImGui::PopStyleVar(2);
     }
 
     update(options_);
