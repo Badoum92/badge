@@ -37,19 +37,37 @@ void Gameboy::step()
 
 void Gameboy::execute_instruction(const Instruction& instruction)
 {
-    instruction.func(*this);
+    if (instruction.func == nullptr)
+    {
+        return;
+    }
+    instruction.func(*this, instruction);
 }
 
 Instruction Gameboy::fetch_instruction()
 {
     cpu.cycles++;
     uint8_t opcode = memory.read(cpu.pc++);
-    Instruction instruction = Instruction::instructions[opcode];
-    if (instruction.func == nullptr)
+
+    Instruction instruction = {};
+    if (opcode != 0xcb)
+    {
+        instruction = Instruction::instructions[opcode];
+    }
+    else
+    {
+        cpu.cycles++;
+        opcode = memory.read(cpu.pc++);
+        cpu.pc++;
+        // FIXME
+        instruction = {};
+        return instruction;
+    }
+
+    if (instruction.type == Instruction::Type::NONE)
     {
         char msg[64];
         sprintf(msg, "Instruction not implemented: 0x%02x\n", opcode);
-        ASSERT_MSG(instruction.func != nullptr, msg);
     }
     return instruction;
 }
@@ -98,6 +116,7 @@ void Gameboy::fetch_data(Instruction& instruction)
         cpu.cycles++;
         break;
     }
+    case Instruction::Addressing::R8:
     case Instruction::Addressing::D8:
     case Instruction::Addressing::R_D8: {
         instruction.data = memory.read(cpu.pc++);

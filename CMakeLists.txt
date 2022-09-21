@@ -29,7 +29,6 @@ add_subdirectory(third_party)
 add_executable(main
     src/main.cpp
     src/common.cpp
-    src/debug.cpp
     src/gameboy.cpp
     src/memory.cpp
     src/instruction.cpp

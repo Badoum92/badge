@@ -21,7 +21,10 @@ struct CPU
     uint64_t cycles = 0;
 
     void reset();
-    uint16_t read_reg(Instruction::Register instruction_reg);
+    uint16_t read_reg(Instruction::Register instruction_reg) const;
+    uint8_t& get_reg8(Instruction::Register instruction_reg);
+    uint16_t& get_reg16(Instruction::Register instruction_reg);
+    bool check_condition(Instruction::Condition condition);
 
 // clang-format off
     inline uint8_t a() const { return regs.a; }
