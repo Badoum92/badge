@@ -7,132 +7,136 @@
 
 struct Gameboy;
 
-struct Instruction
+enum class Operand
 {
-    enum class Type
-    {
-        NONE,
-        NOP,
-        STOP,
-        HALT,
-        LD,
-        LDH,
-        INC,
-        DEC,
-        ADD,
-        SUB,
-        ADC,
-        SBC,
-        RLCA,
-        RRCA,
-        RLA,
-        JR,
-        JP,
-        RRA,
-        DAA,
-        CPL,
-        SCF,
-        CCF,
-        AND,
-        XOR,
-        OR,
-        CP,
-        RET,
-        RETI,
-        POP,
-        PUSH,
-        CALL,
-        RST,
-        PREFIX,
-        DI,
-        EI,
-        Count
-    };
+    NONE,
+    R,
+    MR,
+    MRI,
+    MRD,
+    MRIO,
+    D8,
+    D16,
+    R8,
+    A8,
+    A16,
+    SPR8,
+    Count
+};
 
-    static constexpr EnumArray<Type, const char*> type_str = {
-        "NONE", "NOP",  "STOP", "HALT", "LD",  "LDH",  "INC",  "DEC", "ADD",    "SUB", "ADC", "SBC",
-        "RLCA", "RRCA", "RLA",  "JR",   "JP",  "RRA",  "DAA",  "CPL", "SCF",    "CCF", "AND", "XOR",
-        "OR",   "CP",   "RET",  "RETI", "POP", "PUSH", "CALL", "RST", "PREFIX", "DI",  "EI"};
+static constexpr EnumArray<Operand, const char*> operand_str = {"NONE", "R",   "MR", "MRI", "MRD", "MRIO",
+                                                                "D8",   "D16", "R8", "A8",  "A16", "SPR8"};
 
-    enum class Addressing
-    {
-        NONE,
-        R,
-        R_R,
-        MR_R,
-        HLI_R,
-        HLD_R,
-        A8_R,
-        A16_R,
-        MR,
-        R_MR,
-        R8,
-        D8,
-        R_D8,
-        MR_D8,
-        D16,
-        R_D16,
-        R_A8,
-        R_A16,
-        R_HLI,
-        R_HLD,
-        HL_SPR8,
-        SP_R8,
-        Count
-    };
+enum class Mnemonic
+{
+    NONE,
+    NOP,
+    STOP,
+    HALT,
+    LD,
+    LDH,
+    INC,
+    DEC,
+    ADD,
+    SUB,
+    ADC,
+    SBC,
+    RLCA,
+    RRCA,
+    RLA,
+    JR,
+    JP,
+    RRA,
+    DAA,
+    CPL,
+    SCF,
+    CCF,
+    AND,
+    XOR,
+    OR,
+    CP,
+    RET,
+    RETI,
+    POP,
+    PUSH,
+    CALL,
+    RST,
+    PREFIX,
+    DI,
+    EI,
+    Count
+};
 
-    static constexpr EnumArray<Addressing, const char*> addressing_str = {
-        "NONE", "R",    "R_R",   "MR_R", "HLI_R", "HLD_R", "A8_R",  "A16_R", "MR",    "R_MR",    "R8",
-        "D8",   "R_D8", "MR_D8", "D16",  "R_D16", "R_A8",  "R_A16", "R_HLI", "R_HLD", "HL_SPR8", "SP_R8"};
+static constexpr EnumArray<Mnemonic, const char*> mnemonic_str = {
+    "NONE", "NOP",  "STOP", "HALT", "LD",  "LDH",  "INC",  "DEC", "ADD",    "SUB", "ADC", "SBC",
+    "RLCA", "RRCA", "RLA",  "JR",   "JP",  "RRA",  "DAA",  "CPL", "SCF",    "CCF", "AND", "XOR",
+    "OR",   "CP",   "RET",  "RETI", "POP", "PUSH", "CALL", "RST", "PREFIX", "DI",  "EI",
+};
 
-    enum class Register
-    {
-        NONE,
-        A,
-        F,
-        B,
-        C,
-        D,
-        E,
-        H,
-        L,
-        AF,
-        BC,
-        DE,
-        HL,
-        SP,
-        PC,
-        Count
-    };
+enum class Reg
+{
+    NONE,
+    A,
+    F,
+    B,
+    C,
+    D,
+    E,
+    H,
+    L,
+    AF,
+    BC,
+    DE,
+    HL,
+    SP,
+    PC,
+    Count
+};
 
-    static constexpr EnumArray<Register, const char*> register_str = {"NONE", "A",  "F",  "B",  "C",  "D",  "E", "H",
-                                                                      "L",    "AF", "BC", "DE", "HL", "SP", "PC"};
+static constexpr EnumArray<Reg, const char*> reg_str = {"NONE", "A",  "F",  "B",  "C",  "D",  "E", "H",
+                                                        "L",    "AF", "BC", "DE", "HL", "SP", "PC"};
 
-    enum class Condition
-    {
-        NONE,
-        NZ,
-        Z,
-        NC,
-        C,
-        Count
-    };
+enum class Cond
+{
+    NONE,
+    NZ,
+    Z,
+    NC,
+    C,
+    Count
+};
 
-    static constexpr EnumArray<Register, const char*> condition_str = {"NONE", "NZ", "Z", "NC", "C"};
+static constexpr EnumArray<Cond, const char*> cond_str = {"NONE", "NZ", "Z", "NC", "C"};
 
-    static Instruction instructions[0x100];
-
-    using Function = void (*)(Gameboy& gb, const Instruction& instruction);
-
-    Type type = Type::NONE;
-    Addressing addressing = Addressing::NONE;
-    Register reg1 = Register::NONE;
-    Register reg2 = Register::NONE;
-    Condition cond = Condition::NONE;
+struct Instr
+{
+    using Function = void (*)(Gameboy& gb, const Instr& instr);
+    uint8_t opcode[2] = {0, 0};
+    Mnemonic mnemonic = Mnemonic::NONE;
+    Cond cond = Cond::NONE;
+    Operand op1 = Operand::NONE;
+    Reg reg1 = Reg::NONE;
+    Operand op2 = Operand::NONE;
+    Reg reg2 = Reg::NONE;
     Function func = nullptr;
 
     uint16_t data = 0;
-    uint16_t memory_dst = 0;
+    uint16_t mem_dst = 0;
+    uint16_t mem_src = 0;
 };
 
-std::string to_string(const Instruction& instruction);
+extern Instr instructions[0x100];
+std::string to_string(const Gameboy& gb, const Instr& instr);
+
+
+struct _Instr
+{
+    using Exec = uint32_t (*)(Gameboy&, const _Instr&);
+    using ToString = uint32_t (*)(Gameboy&, const _Instr&, char* buf);
+
+    Exec exec = nullptr;
+    ToString to_string = nullptr;
+    Reg r1 = Reg::NONE;
+    Reg r2 = Reg::NONE;
+    Cond cond = Cond::NONE;
+};

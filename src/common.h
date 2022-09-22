@@ -31,3 +31,9 @@ inline uint8_t high_bits(uint16_t x)
 {
     return (x & 0xff00) >> 8;
 }
+
+template <typename TO, typename FROM>
+inline TO bit_cast(FROM in)
+{
+    return *(TO*)&in;
+}

@@ -2,114 +2,141 @@
 
 #include <cstring>
 
-void CPU::reset()
+#include "gameboy.h"
+
+void CPU::reset(const CartInfo& cart_info)
 {
     memset(this, 0, sizeof(CPU));
+
+    a() = 0x01;
+    flag_z(1);
+    flag_n(0);
+    flag_h(cart_info.header_checksum != 0);
+    flag_c(cart_info.header_checksum != 0);
+    b() = 0x00;
+    c() = 0x13;
+    d() = 0x00;
+    e() = 0xd8;
+    h() = 0x01;
+    l() = 0x4d;
+    sp = 0xfffe;
     pc = 0x0100;
 }
 
-uint16_t CPU::read_reg(Instruction::Register instruction_reg) const
+uint16_t CPU::read_reg(Reg reg) const
 {
-    ASSERT(instruction_reg != Instruction::Register::NONE);
-    switch (instruction_reg)
+    switch (reg)
     {
-    case Instruction::Register::A:
+    case Reg::A:
         return a();
-    case Instruction::Register::F:
+    case Reg::F:
         return f();
-    case Instruction::Register::B:
+    case Reg::B:
         return b();
-    case Instruction::Register::C:
+    case Reg::C:
         return c();
-    case Instruction::Register::D:
+    case Reg::D:
         return d();
-    case Instruction::Register::E:
+    case Reg::E:
         return e();
-    case Instruction::Register::H:
+    case Reg::H:
         return h();
-    case Instruction::Register::L:
+    case Reg::L:
         return l();
-    case Instruction::Register::AF:
+    case Reg::AF:
         return af();
-    case Instruction::Register::BC:
+    case Reg::BC:
         return bc();
-    case Instruction::Register::DE:
+    case Reg::DE:
         return de();
-    case Instruction::Register::HL:
+    case Reg::HL:
         return hl();
-    case Instruction::Register::SP:
+    case Reg::SP:
         return sp;
-    case Instruction::Register::PC:
+    case Reg::PC:
         return pc;
     default:
+        ASSERT(reg != Reg::NONE);
         return 0;
     }
 }
 
-uint8_t& CPU::get_reg8(Instruction::Register instruction_reg)
+uint8_t& CPU::get_reg8(Reg reg)
 {
-    ASSERT(instruction_reg != Instruction::Register::NONE);
+    ASSERT(reg != Reg::NONE && reg != Reg::Count);
     static uint8_t x = 0;
-    switch (instruction_reg)
+    switch (reg)
     {
-    case Instruction::Register::A:
+    case Reg::A:
         return a();
-    case Instruction::Register::F:
+    case Reg::F:
         return f();
-    case Instruction::Register::B:
+    case Reg::B:
         return b();
-    case Instruction::Register::C:
+    case Reg::C:
         return c();
-    case Instruction::Register::D:
+    case Reg::D:
         return d();
-    case Instruction::Register::E:
+    case Reg::E:
         return e();
-    case Instruction::Register::H:
+    case Reg::H:
         return h();
-    case Instruction::Register::L:
+    case Reg::L:
         return l();
     default:
         return x;
     }
 }
 
-uint16_t& CPU::get_reg16(Instruction::Register instruction_reg)
+uint16_t& CPU::get_reg16(Reg reg)
 {
-    ASSERT(instruction_reg != Instruction::Register::NONE);
+    ASSERT(reg != Reg::NONE && reg != Reg::Count);
     static uint16_t x = 0;
-    switch(instruction_reg)
+    switch (reg)
     {
-    case Instruction::Register::AF:
+    case Reg::AF:
         return af();
-    case Instruction::Register::BC:
+    case Reg::BC:
         return bc();
-    case Instruction::Register::DE:
+    case Reg::DE:
         return de();
-    case Instruction::Register::HL:
+    case Reg::HL:
         return hl();
-    case Instruction::Register::SP:
+    case Reg::SP:
         return sp;
-    case Instruction::Register::PC:
+    case Reg::PC:
         return pc;
     default:
         return x;
     }
 }
 
-
-bool CPU::check_condition(Instruction::Condition condition)
+void CPU::set_reg(Reg reg, uint16_t val)
 {
-    switch (condition)
+    ASSERT(reg != Reg::NONE && reg != Reg::Count);
+    if (reg < Reg::AF)
     {
-    case Instruction::Condition::NONE:
+        get_reg8(reg) = val;
+    }
+    else
+    {
+        get_reg16(reg) = val;
+    }
+}
+
+bool CPU::check_condition(Cond cond) const
+{
+    switch (cond)
+    {
+    case Cond::NONE:
         return true;
-    case Instruction::Condition::C:
+    case Cond::C:
         return flag_c();
-    case Instruction::Condition::NC:
+    case Cond::NC:
         return !flag_c();
-    case Instruction::Condition::Z:
+    case Cond::Z:
         return flag_z();
-    case Instruction::Condition::NZ:
+    case Cond::NZ:
         return !flag_z();
     default:
         ASSERT(!"Not implemented");

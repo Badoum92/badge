@@ -3,6 +3,8 @@
 #include "common.h"
 #include "instruction.h"
 
+struct CartInfo;
+
 struct CPU
 {
     struct
@@ -18,13 +20,18 @@ struct CPU
     } regs;
     uint16_t sp = 0x0000;
     uint16_t pc = 0x0100;
+    uint8_t ime = 1;
     uint64_t cycles = 0;
 
-    void reset();
-    uint16_t read_reg(Instruction::Register instruction_reg) const;
-    uint8_t& get_reg8(Instruction::Register instruction_reg);
-    uint16_t& get_reg16(Instruction::Register instruction_reg);
-    bool check_condition(Instruction::Condition condition);
+    bool halted = false;
+    bool stopped = false;
+
+    void reset(const CartInfo& cart_info);
+    uint16_t read_reg(Reg reg) const;
+    uint8_t& get_reg8(Reg reg);
+    uint16_t& get_reg16(Reg reg);
+    void set_reg(Reg reg, uint16_t val);
+    bool check_condition(Cond cond) const;
 
 // clang-format off
     inline uint8_t a() const { return regs.a; }

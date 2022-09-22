@@ -17,20 +17,10 @@ struct Options
     bool vsync = true;
 };
 
-class Application
-{
-public:
-    Application(const Options& options, bool full_window_imgui = false);
-    ~Application();
-    Application(const Application&) = delete;
-
-    void run();
-    virtual void update(const Options& options) = 0;
-
-private:
-    void render();
-
-    Options options_;
-    bool full_window_imgui_ = false;
-};
+void init(const Options& options, bool full_window_imgui);
+void terminate();
+void begin_frame();
+void end_frame();
+bool running();
+const Options& options();
 } // namespace bag

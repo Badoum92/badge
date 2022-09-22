@@ -46,6 +46,9 @@ struct Memory
     void reset();
 
     uint8_t operator[](size_t i) const;
+    uint8_t& operator[](size_t i);
     uint8_t read(uint16_t addr) const;
+    uint16_t read16(uint16_t addr) const;
     void write(uint16_t addr, uint8_t value);
+    void write16(uint16_t addr, uint16_t value);
 };
