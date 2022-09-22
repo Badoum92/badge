@@ -77,12 +77,13 @@ struct Instruction
         R_HLI,
         R_HLD,
         HL_SPR8,
+        SP_R8,
         Count
     };
 
     static constexpr EnumArray<Addressing, const char*> addressing_str = {
-        "NONE", "R",    "R_R",   "MR_R", "HLI_R", "HLD_R", "A8_R",  "A16_R", "MR",    "R_MR",   "R8",
-        "D8",   "R_D8", "MR_D8", "D16",  "R_D16", "R_A8",  "R_A16", "R_HLI", "R_HLD", "HL_SPR8"};
+        "NONE", "R",    "R_R",   "MR_R", "HLI_R", "HLD_R", "A8_R",  "A16_R", "MR",    "R_MR",    "R8",
+        "D8",   "R_D8", "MR_D8", "D16",  "R_D16", "R_A8",  "R_A16", "R_HLI", "R_HLD", "HL_SPR8", "SP_R8"};
 
     enum class Register
     {

@@ -177,8 +177,14 @@ void Gameboy::fetch_data(Instruction& instruction)
     }
     case Instruction::Addressing::HL_SPR8: {
         uint8_t ur8 = memory.read(cpu.pc++);
+        cpu.cycles++;
         int8_t r8 = *(int8_t*)&ur8;
         instruction.data = cpu.sp + r8;
+        cpu.cycles++;
+        break;
+    }
+    case Instruction::Addressing::SP_R8: {
+        instruction.data = memory.read(cpu.pc++);
         cpu.cycles++;
         break;
     }
