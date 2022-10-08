@@ -1792,7 +1792,7 @@ static uint32_t instr_ld_a16_r8(Gameboy& gb, const Instr& instr)
 {
     uint16_t addr = gb.memory.read16(gb.cpu.pc);
     gb.cpu.pc += 2;
-    gb.memory.write16(addr, gb.cpu.get_reg8(instr.r1));
+    gb.memory.write(addr, gb.cpu.get_reg8(instr.r1));
     return 4;
 }
 
@@ -1874,7 +1874,7 @@ static std::string instr_jp_r16_str(Gameboy&, const Instr& instr)
 
 static uint32_t instr_ei(Gameboy& gb, const Instr&)
 {
-    gb.cpu.ime = true;
+    gb.cpu.enable_interrupts = true;
     return 1;
 }
 

@@ -33,6 +33,7 @@ add_executable(main
     src/memory.cpp
     src/instruction.cpp
     src/cpu.cpp
+    src/interrupt.cpp
 )
 
 target_include_directories(main

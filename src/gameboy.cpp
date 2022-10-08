@@ -3,11 +3,17 @@
 #include <cstdio>
 #include <cstring>
 
+#include "interrupt.h"
+
 Gameboy::Gameboy()
-{}
+{
+    init_interrupts(*this);
+}
 
 void Gameboy::reset()
 {
+    memory.reset();
+    cpu.reset(cart_info);
 }
 
 bool Gameboy::load_rom(const char* path)
@@ -54,6 +60,7 @@ void Gameboy::step()
 {
     Instr instr = fetch_instruction();
     execute_instruction(instr);
+    handle_interrupts(*this);
 }
 
 void Gameboy::execute_instruction(const Instr& instr)

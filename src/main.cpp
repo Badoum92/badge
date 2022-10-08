@@ -5,6 +5,7 @@
 #include <bag/image.h>
 
 #include "gameboy.h"
+#include "interrupt.h"
 
 struct InstrInfo
 {
@@ -17,6 +18,7 @@ struct InstrInfo
 Gameboy gb;
 bag::Image placeholder;
 std::vector<InstrInfo> instr_info;
+bool scroll_to_pc = true;
 inline static constexpr uint32_t scale = 5;
 
 void load_instruction(Gameboy& gb, size_t addr)
@@ -144,27 +146,66 @@ void memory_window()
     ImGui::End();
 }
 
-void registers_window()
+void state_window()
 {
-    if (!ImGui::Begin("Registers"))
+    if (!ImGui::Begin("State"))
     {
         ImGui::End();
         return;
     }
 
+    // CPU Registers
+
     ImGui::Text("af 0x%04x   a 0x%02x", gb.cpu.af(), gb.cpu.a());
     ImGui::Text("bc 0x%04x   b 0x%02x   c 0x%02x", gb.cpu.bc(), gb.cpu.b(), gb.cpu.c());
     ImGui::Text("de 0x%04x   d 0x%02x   e 0x%02x", gb.cpu.de(), gb.cpu.d(), gb.cpu.e());
     ImGui::Text("hl 0x%04x   h 0x%02x   l 0x%02x", gb.cpu.hl(), gb.cpu.h(), gb.cpu.l());
-
-    ImGui::Separator();
-
-    ImGui::Text("z %d   n %d", gb.cpu.flag_z(), gb.cpu.flag_n());
-    ImGui::Text("h %d   c %d", gb.cpu.flag_h(), gb.cpu.flag_c());
-
-    ImGui::Separator();
-
     ImGui::Text("sp 0x%04x   pc 0x%04x", gb.cpu.sp, gb.cpu.pc);
+
+    ImGui::Separator();
+
+    // CPU flags
+
+    bool flag_z = gb.cpu.flag_z();
+    bool flag_n = gb.cpu.flag_n();
+    bool flag_h = gb.cpu.flag_h();
+    bool flag_c = gb.cpu.flag_c();
+
+    ImGui::TextUnformatted("z");
+    ImGui::SameLine();
+    ImGui::Checkbox("##z", &flag_z);
+    ImGui::SameLine();
+    ImGui::TextUnformatted("n");
+    ImGui::SameLine();
+    ImGui::Checkbox("##n", &flag_n);
+
+    ImGui::TextUnformatted("h");
+    ImGui::SameLine();
+    ImGui::Checkbox("##h", &flag_h);
+    ImGui::SameLine();
+    ImGui::TextUnformatted("c");
+    ImGui::SameLine();
+    ImGui::Checkbox("##c", &flag_c);
+
+    ImGui::Separator();
+
+    // Interrupts
+
+    bool ime = gb.cpu.ime;
+    ImGui::TextUnformatted("IME");
+    ImGui::SameLine();
+    ImGui::Checkbox("##IME", &ime);
+
+    for (size_t i = 0; i < static_cast<size_t>(Interrupt::Count); ++i)
+    {
+        Interrupt interrupt = static_cast<Interrupt>(i);
+        bool enable = interrupt_enable(interrupt);
+        char label[32];
+        sprintf(label, "##%s", interrupt_str[interrupt]);
+        ImGui::TextUnformatted(interrupt_str[interrupt]);
+        ImGui::SameLine();
+        ImGui::Checkbox(label, &enable);
+    }
 
     ImGui::End();
 }
@@ -180,17 +221,23 @@ void control_window()
     if (ImGui::Button("Run") && gb.stepping)
     {
         gb.stepping = false;
-        gb.step();
     }
     ImGui::SameLine();
     if (ImGui::Button("Step") && gb.stepping)
     {
         gb.step();
+        scroll_to_pc = true;
     }
     ImGui::SameLine();
     if (ImGui::Button("Pause"))
     {
         gb.stepping = true;
+        scroll_to_pc = true;
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Goto pc"))
+    {
+        scroll_to_pc = true;
     }
 
     ImGui::Text("%s", instr_info[gb.cpu.pc].text.c_str());
@@ -216,13 +263,17 @@ void disassembly_window()
         ImVec4 color = {1.0f, 1.0f, 1.0f, 1.0f};
         if (i == gb.cpu.pc)
         {
+            if (scroll_to_pc)
+            {
+                ImGui::SetScrollHereY(0.4f);
+                scroll_to_pc = false;
+            }
             color = {0.6f, 1.0f, 0.6f, 1.0f};
         }
         ImGui::Checkbox(instr.label.c_str(), &instr.breakpoint);
         ImGui::SameLine();
         ImGui::TextColored(color, "%s", instr.text.c_str());
     }
-
     ImGui::End();
 }
 
@@ -248,7 +299,7 @@ void render()
     game_window();
     control_window();
     memory_window();
-    registers_window();
+    state_window();
     disassembly_window();
     cart_info_window();
 }
@@ -261,6 +312,7 @@ void update()
     {
         if (instr_info[gb.cpu.pc].breakpoint)
         {
+            scroll_to_pc = true;
             gb.stepping = true;
             break;
         }

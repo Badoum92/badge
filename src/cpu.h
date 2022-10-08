@@ -25,6 +25,7 @@ struct CPU
 
     bool halted = false;
     bool stopped = false;
+    bool enable_interrupts = false;
 
     void reset(const CartInfo& cart_info);
     uint16_t read_reg(Reg reg) const;
