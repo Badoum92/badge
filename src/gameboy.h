@@ -25,7 +25,6 @@ struct Gameboy
     void step();
     void execute_instruction(const Instr& instr);
     Instr fetch_instruction();
-    void fetch_data(Instr& instr);
 
     CartInfo cart_info;
     Memory memory;

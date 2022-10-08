@@ -22,9 +22,15 @@ inline static constexpr uint32_t scale = 5;
 void load_instruction(Gameboy& gb, size_t addr)
 {
     Instr instr = gb.fetch_instruction();
-    gb.fetch_data(instr);
     char buf[64] = {};
-    sprintf(buf, "0x%04llx: %s", addr, to_string(gb, instr).c_str());
+    if (instr.to_string == nullptr)
+    {
+        sprintf(buf, "0x%04llx: UNDEFINED", addr);
+    }
+    else
+    {
+        sprintf(buf, "0x%04llx: %s", addr, instr.to_string(gb, instr).c_str());
+    }
     instr_info[addr] = {buf, "", false, true};
     instr_info[addr].label = "##" + instr_info[addr].text;
 }
@@ -249,7 +255,7 @@ void render()
 
 void update()
 {
-    size_t n_instructions = 64;
+    size_t n_instructions = 128;
 
     while (!gb.stepping && n_instructions > 0)
     {
