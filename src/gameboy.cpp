@@ -12,13 +12,14 @@ Gameboy::Gameboy()
 
 void Gameboy::reset()
 {
-    memory.reset();
+    memory.reset(cart_info);
     cpu.reset(cart_info);
+    stepping = true;
+    serial_data.clear();
 }
 
 bool Gameboy::load_rom(const char* path)
 {
-    memory.reset();
     FILE* file = nullptr;
     if (fopen_s(&file, path, "rb") != 0)
     {
@@ -51,6 +52,7 @@ bool Gameboy::load_rom(const char* path)
     cart_info.rom_size = memory[0x148];
     cart_info.ram_size = memory[0x149];
     cart_info.header_checksum = memory[0x14d];
+    memory.reset(cart_info);
     cpu.reset(cart_info);
 
     return true;
@@ -61,6 +63,13 @@ void Gameboy::step()
     Instr instr = fetch_instruction();
     execute_instruction(instr);
     handle_interrupts(*this);
+
+    if (memory[0xff02] == 0x81)
+    {
+        char c = memory[0xff01];
+        serial_data.push_back(c);
+        memory[0xff02] = 0;
+    }
 }
 
 void Gameboy::execute_instruction(const Instr& instr)

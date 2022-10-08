@@ -31,4 +31,6 @@ struct Gameboy
     CPU cpu;
 
     bool stepping = true;
+
+    std::string serial_data;
 };

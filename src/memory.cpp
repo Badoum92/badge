@@ -2,9 +2,12 @@
 
 #include <cstring>
 
-void Memory::reset()
+#include "gameboy.h"
+
+void Memory::reset(const CartInfo&)
 {
-    memset(data, 0, SIZE);
+    memset(data + VRAM_BEGIN, 0, SIZE - VRAM_BEGIN);
+    data[0xff0f] = 0xe1;
 }
 
 uint8_t Memory::operator[](size_t i) const
@@ -33,12 +36,21 @@ uint16_t Memory::read16(uint16_t addr) const
 
 void Memory::write(uint16_t addr, uint8_t value)
 {
-    ASSERT(addr > ROM_BANK_N_END);
+    if (addr <= ROM_BANK_N_END)
+    {
+        return;
+    }
+
     data[addr] = value;
 }
 
 void Memory::write16(uint16_t addr, uint16_t value)
 {
+    if (addr <= ROM_BANK_N_END)
+    {
+        return;
+    }
+
     uint8_t lo = value & 0x00ff;
     uint8_t hi = (value & 0xff00) >> 8;
     write(addr, lo);

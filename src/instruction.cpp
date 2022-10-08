@@ -130,11 +130,12 @@ static std::string instr_rrc_mr_str(Gameboy& gb, const Instr& instr)
 static uint8_t _rl(Gameboy& gb, uint8_t data)
 {
     uint8_t c = gb.cpu.flag_c();
+    gb.cpu.flag_c(data & 0x80);
+    data = (data << 1) | (c != 0);
     gb.cpu.flag_z(data == 0);
     gb.cpu.flag_n(0);
     gb.cpu.flag_h(0);
-    gb.cpu.flag_c(data & 0x80);
-    return (data << 1) | (c != 0);
+    return data;
 }
 
 static uint32_t instr_rl_r8(Gameboy& gb, const Instr& instr)
@@ -164,11 +165,12 @@ static std::string instr_rl_mr_str(Gameboy& gb, const Instr& instr)
 static uint8_t _rr(Gameboy& gb, uint8_t data)
 {
     uint8_t c = gb.cpu.flag_c();
+    gb.cpu.flag_c(data & 0x01);
+    data = (data >> 1) | (c << 7);
     gb.cpu.flag_z(data == 0);
     gb.cpu.flag_n(0);
     gb.cpu.flag_h(0);
-    gb.cpu.flag_c(data & 0x01);
-    return (data >> 1) | (c << 7);
+    return data;
 }
 
 static uint32_t instr_rr_r8(Gameboy& gb, const Instr& instr)
@@ -201,7 +203,7 @@ static uint8_t _sla(Gameboy& gb, uint8_t data)
     gb.cpu.flag_h(0);
     gb.cpu.flag_c(data & 0x80);
     data = data << 1;
-    gb.cpu.flag_z(data);
+    gb.cpu.flag_z(data == 0);
     return data;
 }
 
@@ -235,7 +237,7 @@ static uint8_t _sra(Gameboy& gb, uint8_t data)
     gb.cpu.flag_h(0);
     gb.cpu.flag_c(data & 0x01);
     data = (data >> 1) | (data & 0x80);
-    gb.cpu.flag_z(data);
+    gb.cpu.flag_z(data == 0);
     return data;
 }
 
@@ -269,7 +271,7 @@ static uint8_t _srl(Gameboy& gb, uint8_t data)
     gb.cpu.flag_h(0);
     gb.cpu.flag_c(data & 0x01);
     data = data >> 1;
-    gb.cpu.flag_z(data);
+    gb.cpu.flag_z(data == 0);
     return data;
 }
 
@@ -299,7 +301,7 @@ static std::string instr_srl_mr_str(Gameboy& gb, const Instr& instr)
 
 static uint8_t _swap(Gameboy& gb, uint8_t data)
 {
-    gb.cpu.flag_z(data);
+    gb.cpu.flag_z(data == 0);
     gb.cpu.flag_n(0);
     gb.cpu.flag_h(0);
     gb.cpu.flag_c(0);
@@ -333,9 +335,9 @@ static std::string instr_swap_mr_str(Gameboy& gb, const Instr& instr)
 
 static void _bit(Gameboy& gb, uint8_t data, size_t n)
 {
-    gb.cpu.flag_z(bit(data, n));
+    gb.cpu.flag_z(bit(data, n) == 0);
     gb.cpu.flag_n(0);
-    gb.cpu.flag_c(1);
+    gb.cpu.flag_h(1);
 }
 
 #define INSTR_BIT_N(N)                                                                                                 \
@@ -750,8 +752,9 @@ static std::string instr_inc_r16_str(Gameboy& gb, const Instr& instr)
 static uint32_t instr_inc_r8(Gameboy& gb, const Instr& instr)
 {
     uint8_t data = gb.cpu.get_reg8(instr.r1);
-    gb.cpu.set_reg(instr.r1, data + 1);
-    gb.cpu.flag_z(data + 1 == 0);
+    uint8_t res = data + 1;
+    gb.cpu.set_reg(instr.r1, res);
+    gb.cpu.flag_z(res == 0);
     gb.cpu.flag_n(0);
     gb.cpu.flag_h((data & 0x0f) == 0x0f);
     return 1;
@@ -1048,8 +1051,9 @@ static std::string instr_ld_hld_r8_str(Gameboy&, const Instr& instr)
 static uint32_t instr_inc_mr(Gameboy& gb, const Instr& instr)
 {
     uint8_t data = gb.memory.read(gb.cpu.get_reg16(instr.r1));
-    gb.memory.write(gb.cpu.get_reg16(instr.r1), data + 1);
-    gb.cpu.flag_z(data + 1 == 0);
+    uint8_t res = data + 1;
+    gb.memory.write(gb.cpu.get_reg16(instr.r1), res);
+    gb.cpu.flag_z(res == 0);
     gb.cpu.flag_n(0);
     gb.cpu.flag_h((data & 0x0f) == 0x0f);
     return 3;
@@ -1157,8 +1161,8 @@ static std::string instr_halt_str(Gameboy&, const Instr&)
 static void _instr_add(Gameboy& gb, uint16_t x, uint16_t y, Reg r)
 {
     uint16_t res = x + y;
-    gb.cpu.set_reg(r, res & 0xff);
-    gb.cpu.flag_z(res == 0);
+    gb.cpu.set_reg(r, (uint8_t)res);
+    gb.cpu.flag_z((uint8_t)res == 0);
     gb.cpu.flag_n(0);
     gb.cpu.flag_h(((x & 0x0f) + (y & 0x0f)) & 0x10);
     gb.cpu.flag_c(res > 0xff);
@@ -1207,8 +1211,8 @@ static std::string instr_add_r8_d8_str(Gameboy& gb, const Instr& instr)
 static void _instr_adc(Gameboy& gb, uint16_t x, uint16_t y, Reg r)
 {
     uint16_t res = x + y + gb.cpu.flag_c();
-    gb.cpu.set_reg(r, res);
-    gb.cpu.flag_z(res == 0);
+    gb.cpu.set_reg(r, (uint8_t)res);
+    gb.cpu.flag_z((uint8_t)res == 0);
     gb.cpu.flag_n(0);
     gb.cpu.flag_h(((x & 0x0f) + (y & 0x0f) + gb.cpu.flag_c()) & 0x10);
     gb.cpu.flag_c(res > 0xff);
@@ -1257,8 +1261,8 @@ static std::string instr_adc_r8_d8_str(Gameboy& gb, const Instr& instr)
 static void _instr_sub(Gameboy& gb, uint16_t x, uint16_t y)
 {
     uint16_t res = x - y;
-    gb.cpu.a() = res;
-    gb.cpu.flag_z(res == 0);
+    gb.cpu.a() = (uint8_t)res;
+    gb.cpu.flag_z((uint8_t)res == 0);
     gb.cpu.flag_n(1);
     gb.cpu.flag_h((x & 0x0f) < (y & 0x0f));
     gb.cpu.flag_c(x < y);
@@ -1306,18 +1310,18 @@ static std::string instr_sub_d8_str(Gameboy& gb, const Instr& instr)
 
 static void _instr_sbc(Gameboy& gb, uint16_t x, uint16_t y, Reg r)
 {
-    uint16_t res = x - (y + gb.cpu.flag_c());
-    gb.cpu.set_reg(r, res);
-    gb.cpu.flag_z(res == 0);
+    uint16_t res = x - y - gb.cpu.flag_c();
+    gb.cpu.set_reg(r, (uint8_t)res);
+    gb.cpu.flag_z((uint8_t)res == 0);
     gb.cpu.flag_n(1);
-    gb.cpu.flag_h((x & 0x0f) < (y & 0x0f) + gb.cpu.flag_c());
-    gb.cpu.flag_c(x < (y & 0x0f) + gb.cpu.flag_c());
+    gb.cpu.flag_h((x ^ y ^ res) & 0x10);
+    gb.cpu.flag_c(res & 0x100);
 }
 
 static uint32_t instr_sbc_r8_r8(Gameboy& gb, const Instr& instr)
 {
-    uint8_t x = gb.cpu.a();
-    uint8_t y = gb.cpu.get_reg8(instr.r1);
+    uint8_t x = gb.cpu.get_reg8(instr.r1);
+    uint8_t y = gb.cpu.get_reg8(instr.r2);
     _instr_sbc(gb, x, y, instr.r1);
     return 1;
 }
@@ -1329,8 +1333,8 @@ static std::string instr_sbc_r8_r8_str(Gameboy& gb, const Instr& instr)
 
 static uint32_t instr_sbc_r8_mr(Gameboy& gb, const Instr& instr)
 {
-    uint8_t x = gb.cpu.a();
-    uint8_t y = gb.memory.read(gb.cpu.get_reg16(instr.r1));
+    uint8_t x = gb.cpu.get_reg8(instr.r1);
+    uint8_t y = gb.memory.read(gb.cpu.get_reg16(instr.r2));
     _instr_sbc(gb, x, y, instr.r1);
     return 2;
 }
@@ -1582,6 +1586,7 @@ static uint32_t instr_pop(Gameboy& gb, const Instr& instr)
 {
     gb.cpu.set_reg(instr.r1, gb.memory.read16(gb.cpu.sp));
     gb.cpu.sp += 2;
+    gb.cpu.f() = gb.cpu.f() & 0xf0;
     return 3;
 }
 
@@ -1826,20 +1831,12 @@ static uint32_t instr_add_r16_s8(Gameboy& gb, const Instr& instr)
 {
     int8_t data = bit_cast<int8_t>(gb.memory.read(gb.cpu.pc));
     gb.cpu.pc += 1;
-    uint16_t r = gb.cpu.get_reg16(instr.r1);
-    int32_t res = r + data;
+    int32_t r16 = gb.cpu.get_reg16(instr.r1);
+    int32_t res = r16 + data;
     gb.cpu.flag_z(0);
     gb.cpu.flag_n(0);
-    if (data < 0)
-    {
-        gb.cpu.flag_h((r & 0x0fff) < -data);
-        gb.cpu.flag_c(r < -data);
-    }
-    if (data > 0)
-    {
-        gb.cpu.flag_h(((r & 0x0fff) + data) & 0x1000);
-        gb.cpu.flag_c(res > 0xffff);
-    }
+    gb.cpu.flag_h((r16 ^ data ^ res) & 0x0010);
+    gb.cpu.flag_c((r16 ^ data ^ res) & 0x0100);
     gb.cpu.set_reg(instr.r1, res);
     return 4;
 }
@@ -1898,20 +1895,12 @@ static uint32_t instr_ld_r16_r16s8(Gameboy& gb, const Instr& instr)
 {
     int8_t data = bit_cast<int8_t>(gb.memory.read(gb.cpu.pc));
     gb.cpu.pc += 1;
-    uint16_t r = gb.cpu.get_reg16(instr.r2);
-    int32_t res = r + data;
+    uint16_t r16 = gb.cpu.get_reg16(instr.r2);
+    int32_t res = r16 + data;
     gb.cpu.flag_z(0);
     gb.cpu.flag_n(0);
-    if (data < 0)
-    {
-        gb.cpu.flag_h((r & 0x0fff) < -data);
-        gb.cpu.flag_c(r < -data);
-    }
-    if (data > 0)
-    {
-        gb.cpu.flag_h(((r & 0x0fff) + data) & 0x1000);
-        gb.cpu.flag_c(res > 0xffff);
-    }
+    gb.cpu.flag_h((r16 ^ data ^ res) & 0x0010);
+    gb.cpu.flag_c((r16 ^ data ^ res) & 0x0100);
     gb.cpu.set_reg(instr.r1, res);
     return 3;
 }

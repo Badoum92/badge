@@ -1,5 +1,6 @@
 #include <string>
 #include <vector>
+#include <chrono>
 
 #include <bag/bag.h>
 #include <bag/image.h>
@@ -40,8 +41,7 @@ void load_instruction(Gameboy& gb, size_t addr)
 void load_disassembly()
 {
     instr_info.resize(Memory::VRAM_BEGIN);
-    Gameboy g;
-    memcpy(&g, &gb, sizeof(Gameboy));
+    Gameboy g = gb;
     load_instruction(g, 0x100);
     load_instruction(g, 0x101);
     g.cpu.pc = 0x150;
@@ -240,7 +240,15 @@ void control_window()
         scroll_to_pc = true;
     }
 
-    ImGui::Text("%s", instr_info[gb.cpu.pc].text.c_str());
+    ImGui::Text("cycles   %llu", gb.cpu.cycles);
+    if (gb.cpu.pc < instr_info.size())
+    {
+        ImGui::Text("%s", instr_info[gb.cpu.pc].text.c_str());
+    }
+    else
+    {
+        ImGui::Text("0x%02x", gb.memory[gb.cpu.pc]);
+    }
 
     ImGui::End();
 }
@@ -294,6 +302,25 @@ void cart_info_window()
     ImGui::End();
 }
 
+void serial_window()
+{
+    if (!ImGui::Begin("Serial"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    if (ImGui::Button("Clear"))
+    {
+        gb.serial_data.clear();
+    }
+    ImGui::BeginChild("SerialDataText");
+    ImGui::TextWrapped("%s", gb.serial_data.c_str());
+    ImGui::EndChild();
+
+    ImGui::End();
+}
+
 void render()
 {
     game_window();
@@ -302,19 +329,31 @@ void render()
     state_window();
     disassembly_window();
     cart_info_window();
+    serial_window();
 }
 
 void update()
 {
-    size_t n_instructions = 128;
+    size_t n_instructions = 100000;
+    auto begin = std::chrono::high_resolution_clock::now();
 
-    while (!gb.stepping && n_instructions > 0)
+    while (!gb.stepping)
     {
-        if (instr_info[gb.cpu.pc].breakpoint)
+        if (gb.cpu.pc < instr_info.size() && instr_info[gb.cpu.pc].breakpoint)
         {
             scroll_to_pc = true;
             gb.stepping = true;
             break;
+        }
+        if (n_instructions == 0)
+        {
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+            if (duration >= 30)
+            {
+                break;
+            }
+            n_instructions = 100000;
         }
         gb.step();
         n_instructions--;
@@ -325,7 +364,7 @@ void update()
 
 int main(int argc, char** argv)
 {
-    bag::init(bag::Options{160 * scale, 144 * scale, "badge", false, false}, false);
+    bag::init(bag::Options{160 * scale, 144 * scale, "badge"}, false);
     placeholder.from_file("../gameboy.jpg");
     ASSERT(argc > 1);
     gb.load_rom(argv[1]);

@@ -2,6 +2,8 @@
 
 #include "common.h"
 
+struct CartInfo;
+
 struct Memory
 {
     static constexpr size_t SIZE = 0x10000;
@@ -43,7 +45,7 @@ struct Memory
 
     uint8_t data[SIZE] = {};
 
-    void reset();
+    void reset(const CartInfo& cart_info);
 
     uint8_t operator[](size_t i) const;
     uint8_t& operator[](size_t i);
