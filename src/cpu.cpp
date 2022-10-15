@@ -21,6 +21,8 @@ void CPU::reset(const CartInfo& cart_info)
     l() = 0x4d;
     sp = 0xfffe;
     pc = 0x0100;
+    ime = 0;
+    enable_interrupts = false;
 }
 
 uint16_t CPU::read_reg(Reg reg) const

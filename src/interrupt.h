@@ -21,3 +21,4 @@ void init_interrupts(Gameboy& gb);
 void handle_interrupts(Gameboy& gb);
 void request_interrupt(Interrupt interrupt);
 bool interrupt_enable(Interrupt interrupt);
+bool interrupt_pending();

@@ -207,6 +207,13 @@ void state_window()
         ImGui::Checkbox(label, &enable);
     }
 
+    ImGui::Separator();
+
+    // Timer
+
+    ImGui::Text("DIV 0x%02x   TIMA 0x%02x", gb.memory[0xff04], gb.memory[0xff05]);
+    ImGui::Text("TMA 0x%02x   TAC 0x%02x", gb.memory[0xff06], gb.memory[0xff07]);
+
     ImGui::End();
 }
 

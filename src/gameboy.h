@@ -23,8 +23,9 @@ struct Gameboy
     bool load_rom(const char* path);
 
     void step();
-    void execute_instruction(const Instr& instr);
+    uint32_t execute_instruction(const Instr& instr);
     Instr fetch_instruction();
+    void process_serial_data();
 
     CartInfo cart_info;
     Memory memory;

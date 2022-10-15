@@ -1561,11 +1561,11 @@ static uint32_t instr_ret(Gameboy& gb, const Instr& instr)
 {
     if (!gb.cpu.check_condition(instr.cond))
     {
-        return 5;
+        return 2;
     }
     gb.cpu.pc = gb.memory.read16(gb.cpu.sp);
     gb.cpu.sp += 2;
-    return instr.cond == Cond::NONE ? 4 : 2;
+    return instr.cond == Cond::NONE ? 4 : 5;
 }
 
 static std::string instr_ret_str(Gameboy&, const Instr& instr)
@@ -1711,7 +1711,7 @@ static uint32_t instr_prefix_cb(Gameboy& gb, const Instr&)
     uint8_t cb_opcode = gb.memory.read(gb.cpu.pc);
     gb.cpu.pc += 1;
     Instr instr = cb_instructions[cb_opcode];
-    return instr.exec(gb, instr);
+    return instr.exec(gb, instr) + 1;
 }
 
 static std::string instr_prefix_cb_str(Gameboy& gb, const Instr&)

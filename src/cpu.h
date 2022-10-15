@@ -18,9 +18,9 @@ struct CPU
         uint8_t l;
         uint8_t h;
     } regs;
-    uint16_t sp = 0x0000;
+    uint16_t sp = 0xfffe;
     uint16_t pc = 0x0100;
-    uint8_t ime = 1;
+    uint8_t ime = 0;
     uint64_t cycles = 0;
 
     bool halted = false;

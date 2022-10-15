@@ -4,10 +4,12 @@
 #include <cstring>
 
 #include "interrupt.h"
+#include "timer.h"
 
 Gameboy::Gameboy()
 {
     init_interrupts(*this);
+    init_timer(*this);
 }
 
 void Gameboy::reset()
@@ -60,26 +62,40 @@ bool Gameboy::load_rom(const char* path)
 
 void Gameboy::step()
 {
-    Instr instr = fetch_instruction();
-    execute_instruction(instr);
-    handle_interrupts(*this);
-
-    if (memory[0xff02] == 0x81)
+    if (!cpu.halted)
     {
-        char c = memory[0xff01];
-        serial_data.push_back(c);
-        memory[0xff02] = 0;
+        Instr instr = fetch_instruction();
+        cpu.cycles = execute_instruction(instr);
     }
+    else
+    {
+        cpu.cycles = 1;
+        cpu.halted = !interrupt_pending();
+    }
+
+    timer_tick(cpu.cycles);
+    handle_interrupts(*this);
+    process_serial_data();
 }
 
-void Gameboy::execute_instruction(const Instr& instr)
+uint32_t Gameboy::execute_instruction(const Instr& instr)
 {
     ASSERT(instr.exec != nullptr);
-    cpu.cycles += instr.exec(*this, instr);
+    return instr.exec(*this, instr);
 }
 
 Instr Gameboy::fetch_instruction()
 {
     uint8_t opcode = memory.read(cpu.pc++);
     return instructions[opcode];
+}
+
+void Gameboy::process_serial_data()
+{
+    if (memory[0xff02] == 0x81)
+    {
+        char c = memory[0xff01];
+        serial_data.push_back(c);
+        memory[0xff02] = 0;
+    }
 }

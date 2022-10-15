@@ -48,6 +48,7 @@ void handle_interrupts(Gameboy& gb)
     if (gb.cpu.ime)
     {
         execute_interrupts(gb);
+        gb.cpu.enable_interrupts = false;
     }
     if (gb.cpu.enable_interrupts)
     {
@@ -64,4 +65,9 @@ void request_interrupt(Interrupt interrupt)
 bool interrupt_enable(Interrupt interrupt)
 {
     return bit(*int_enable, static_cast<size_t>(interrupt));
+}
+
+bool interrupt_pending()
+{
+    return *int_enable & *int_flag;
 }
