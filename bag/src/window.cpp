@@ -33,8 +33,8 @@ void Window::create(Options& options)
     glfwWindowHint(GLFW_RESIZABLE, options.resizeable);
 
     handle_ = glfwCreateWindow(options.width, options.height, options.title.c_str(), nullptr, nullptr);
-
     glfwMakeContextCurrent(handle_);
+    glfwSetWindowPos(handle_, 100, 100);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     {

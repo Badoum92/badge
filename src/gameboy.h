@@ -2,7 +2,9 @@
 
 #include "memory.h"
 #include "cpu.h"
+#include "ppu.h"
 #include "instruction.h"
+#include "dma.h"
 
 struct CartInfo
 {
@@ -30,8 +32,12 @@ struct Gameboy
     CartInfo cart_info;
     Memory memory;
     CPU cpu;
+    PPU ppu;
+    DMA dma;
 
     bool stepping = true;
 
     std::string serial_data;
 };
+
+extern Gameboy gb;

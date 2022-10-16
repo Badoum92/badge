@@ -6,6 +6,8 @@
 #include "interrupt.h"
 #include "timer.h"
 
+Gameboy gb;
+
 Gameboy::Gameboy()
 {
     init_interrupts(*this);
@@ -16,6 +18,7 @@ void Gameboy::reset()
 {
     memory.reset(cart_info);
     cpu.reset(cart_info);
+    ppu.reset(*this);
     stepping = true;
     serial_data.clear();
 }
@@ -54,8 +57,8 @@ bool Gameboy::load_rom(const char* path)
     cart_info.rom_size = memory[0x148];
     cart_info.ram_size = memory[0x149];
     cart_info.header_checksum = memory[0x14d];
-    memory.reset(cart_info);
-    cpu.reset(cart_info);
+
+    reset();
 
     return true;
 }
@@ -65,15 +68,16 @@ void Gameboy::step()
     if (!cpu.halted)
     {
         Instr instr = fetch_instruction();
-        cpu.cycles = execute_instruction(instr);
+        cpu.cycles += execute_instruction(instr);
     }
     else
     {
-        cpu.cycles = 1;
+        cpu.cycles += 1;
         cpu.halted = !interrupt_pending();
     }
 
     timer_tick(cpu.cycles);
+    cpu.cycles = 0;
     handle_interrupts(*this);
     process_serial_data();
 }

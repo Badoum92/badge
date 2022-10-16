@@ -101,6 +101,10 @@ void Memory::write(uint16_t addr, uint8_t value)
         timer_reset_div();
         return;
     }
+    else if (addr == 0xff46)
+    {
+        gb.dma.start(value);
+    }
 
     data[addr] = value;
 }

@@ -12,6 +12,7 @@ struct Image
 
     void from_file(const char* path);
     void from_buffer(const uint8_t* data, uint32_t _width, uint32_t _height);
+    void update(const uint8_t* data);
     void* to_ptr();
 
     uint32_t handle = 0;

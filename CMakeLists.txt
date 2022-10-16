@@ -35,6 +35,8 @@ add_executable(main
     src/cpu.cpp
     src/interrupt.cpp
     src/timer.cpp
+    src/ppu.cpp
+    src/dma.cpp
 )
 
 target_include_directories(main

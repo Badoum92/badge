@@ -55,6 +55,11 @@ void Image::from_buffer(const uint8_t* data, uint32_t _width, uint32_t _height)
     glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
 }
 
+void Image::update(const uint8_t* data)
+{
+    glTextureSubImage2D(handle, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+}
+
 void* Image::to_ptr()
 {
     return (void*)(intptr_t)handle;

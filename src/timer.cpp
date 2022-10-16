@@ -21,7 +21,7 @@ void init_timer(Gameboy& gb)
 
 void timer_tick(uint64_t cycles)
 {
-    internal_div += cycles;
+    internal_div += cycles * 4;
     if (internal_div >= 256)
     {
         internal_div -= 256;

@@ -16,11 +16,13 @@ struct InstrInfo
     bool valid = false;
 };
 
-Gameboy gb;
 bag::Image placeholder;
 std::vector<InstrInfo> instr_info;
 bool scroll_to_pc = true;
 inline static constexpr uint32_t scale = 5;
+
+bag::Image debug_tiles;
+uint32_t debug_tiles_data[384 * 8 * 8] = {};
 
 void load_instruction(Gameboy& gb, size_t addr)
 {
@@ -328,6 +330,51 @@ void serial_window()
     ImGui::End();
 }
 
+void tiles_window()
+{
+    ImGui::SetNextWindowContentSize(ImVec2(debug_tiles.width * scale, debug_tiles.height * scale));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0);
+
+    if (!ImGui::Begin("Tiles", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+        ImGui::PopStyleVar(2);
+        ImGui::End();
+        return;
+    }
+
+    static const auto load_tile = [&](uint32_t tile_x, uint32_t tile_y) {
+        uint32_t tile_index = tile_y * 16 + tile_x;
+        uint8_t* tile_data = gb.ppu.vram + (tile_index * 16);
+        for (size_t i = 0; i < 8; ++i)
+        {
+            uint8_t line_lo = tile_data[i * 2];
+            uint8_t line_hi = tile_data[i * 2 + 1];
+
+            for (size_t b = 0; b < 8; ++b)
+            {
+                uint8_t color_index = (bit(line_hi, b) << 1) | bit(line_lo, b);
+                uint32_t color = PPU::colors[color_index];
+                debug_tiles_data[tile_y * 16 * 8 * 8 + i * 16 * 8 + tile_x * 8 + 7 - b] = color;
+            }
+        }
+    };
+
+    for (size_t y = 0; y < 24; ++y)
+    {
+        for (size_t x = 0; x < 16; ++x)
+        {
+            load_tile(x, y);
+        }
+    }
+
+    debug_tiles.update((uint8_t*)debug_tiles_data);
+    ImGui::Image(debug_tiles.to_ptr(), ImVec2(debug_tiles.width * scale, debug_tiles.height * scale));
+
+    ImGui::PopStyleVar(2);
+    ImGui::End();
+}
+
 void render()
 {
     game_window();
@@ -337,6 +384,7 @@ void render()
     disassembly_window();
     cart_info_window();
     serial_window();
+    tiles_window();
 }
 
 void update()
@@ -373,6 +421,7 @@ int main(int argc, char** argv)
 {
     bag::init(bag::Options{160 * scale, 144 * scale, "badge"}, false);
     placeholder.from_file("../gameboy.jpg");
+    debug_tiles.from_buffer((uint8_t*)debug_tiles_data, 16 * 8, 24 * 8);
     ASSERT(argc > 1);
     gb.load_rom(argv[1]);
     load_disassembly();
